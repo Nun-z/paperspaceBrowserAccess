@@ -2,8 +2,6 @@
 
 Start, shutdown, or restart a [Paperspace](http://www.paperspace.com/) cloud computer using a regular web browser by accessing a simple website, without entering your credentials.  You can also get the current state of the machine (on, off, inaccessible, etc.).
 
-Anyone who isn't a complete idiot can see your API key and machine hostname if you use this, so I wouldn't recommend using this in its current state.
-
 You can obfuscate the HTML here: https://www.wmtips.com/tools/html-obfuscator/
 
 ## Reason
