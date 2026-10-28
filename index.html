@@ -22,11 +22,6 @@
             <button onclick="sendPaperspace('/restart')">Restart Machine</button>
             
             <p>Machine status: <span id = "statusText">getting status...</span></p>
-
-            <p>Monthly storage cost: <span id = "storageCost">getting info...</span></p>
-            <p>Monthly utilization (hours): <span id = "hoursUsed">getting info...</span></p>
-            <p>Hourly cost: <span id = "hourlyCost">getting info...</span></p>
-            <p>Total cost for this month: <span id = "totalCost">getting info...</span></p>
         </body>
 
         <script type="text/javascript">
@@ -34,76 +29,47 @@
             
             var machineId = '<insert here>';
             var apiKey = '<insert here>';
-            
-            // Get initial utilization
-            getUtilization();
-            
+            var apiBase = 'https://api.paperspace.com/v1/machines/';
+
             // Get the status every few seconds, continuously
-            setInterval(getStatusPaperspace, 500); 
-            // Get utilization info every five minutes, continuously
-            setInterval(getUtilization, 300000);
-            
+            getStatusPaperspace();
+            setInterval(getStatusPaperspace, 5000);
+
             // Start, restart, or shutdown the machine
             function sendPaperspace(action)
-            {   
-                var url = 'https://api.paperspace.io/machines/' + machineId + action;
+            {
+                var url = apiBase + machineId + action;
                 var xhr = new XMLHttpRequest();
-                xhr.open("POST", url, true);
-                xhr.setRequestHeader("x-api-key", apiKey);
+                xhr.open("PATCH", url, true);
+                xhr.setRequestHeader("Authorization", "Bearer " + apiKey);
                 xhr.send();
-            }  
-            
+            }
+
             // Get the status of the machine
             function getStatusPaperspace()
-            {   
-                var url = 'https://api.paperspace.io/machines/getMachinePublic?machineId=' + machineId;
+            {
+                var url = apiBase + machineId;
                 var xhr = new XMLHttpRequest();
                 xhr.open("GET", url, true);
-                xhr.setRequestHeader("x-api-key", apiKey);
+                xhr.setRequestHeader("Authorization", "Bearer " + apiKey);
                 xhr.responseType = 'json';
                 xhr.send();
-                
-                xhr.onload = function() 
+
+                xhr.onload = function()
                 {
+                    if (xhr.status !== 200 || !xhr.response)
+                    {
+                        document.getElementById("statusText").innerHTML = 'error (' + xhr.status + ')';
+                        return;
+                    }
+
                     var state = xhr.response.state;
                     document.getElementById("statusText").innerHTML = state;
                 };
-            }  
-            
-            // Get utilization information
-            function getUtilization()
-            {
-                var currentDate = new Date();
-                var year = currentDate.getFullYear();
-                var month = currentDate.getMonth();
-                
-                month++;
-                
-                if (month < 10)
+
+                xhr.onerror = function()
                 {
-                    month = '0'+month;
-                }
-                
-                var url = 'https://api.paperspace.io/machines/getUtilization?machineId=' + machineId + '&billingMonth=' + year + '-' + month;
-                var xhr = new XMLHttpRequest();
-                xhr.open("GET", url, true);
-                xhr.setRequestHeader("x-api-key", apiKey);
-                xhr.responseType = 'json';
-                xhr.send();
-                
-                xhr.onload = function() 
-                {
-                    var storageCost = xhr.response.storageUtilization.monthlyRate;
-                    document.getElementById("storageCost").innerHTML = '$' + storageCost;
-                    
-                    var hoursUsed = xhr.response.utilization.secondsUsed;
-                    document.getElementById("hoursUsed").innerHTML = Math.round(hoursUsed * 1/60 * 1/60);
-                    
-                    var hourRate = xhr.response.utilization.hourlyRate;
-                    document.getElementById("hourlyCost").innerHTML = '$' + hourRate;
-                    
-                    var totalCost = Math.round(parseFloat(hourRate) * parseFloat(hoursUsed) * 1/60 * 1/60 + parseFloat(storageCost));
-                    document.getElementById("totalCost").innerHTML = '$' + totalCost;
+                    document.getElementById("statusText").innerHTML = 'unreachable';
                 };
             }
         </script>
