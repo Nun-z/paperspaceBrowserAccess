@@ -1,77 +1,58 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Access Paperspace machine</title>
-        <meta charset="UTF-8">
-        <style>
-            body {    
-            background-color: white; }
-            #main {
-                color: black;
-                font-family: Arial, Helvetica, sans-serif;
-                font-weight: bold;
-                font-size: 3em;
-                text-align: center;
-                padding: 200px 0;
-            }
-        </style>
-        
-        <body>
-            <button onclick="sendPaperspace('/start')">Start Machine</button>
-            <button onclick="sendPaperspace('/stop')">Shutdown Machine</button>
-            <button onclick="sendPaperspace('/restart')">Restart Machine</button>
-            
-            <p>Machine status: <span id = "statusText">getting status...</span></p>
-        </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Access Paperspace machine</title>
+</head>
+<body>
+    <button type="button" data-action="start">Start Machine</button>
+    <button type="button" data-action="stop">Shutdown Machine</button>
+    <button type="button" data-action="restart">Restart Machine</button>
 
-        <script type="text/javascript">
-            "use strict";     
-            
-            var machineId = '<insert here>';
-            var apiKey = '<insert here>';
-            var apiBase = 'https://api.paperspace.com/v1/machines/';
+    <p>Machine status: <span id="statusText">getting status...</span></p>
 
-            // Get the status every few seconds, continuously
-            getStatusPaperspace();
-            setInterval(getStatusPaperspace, 5000);
+    <script>
+        const CONFIG = {
+            machine: '<insert here>',
+            token: '<insert here>'
+        };
 
-            // Start, restart, or shutdown the machine
-            function sendPaperspace(action)
-            {
-                var url = apiBase + machineId + action;
-                var xhr = new XMLHttpRequest();
-                xhr.open("PATCH", url, true);
-                xhr.setRequestHeader("Authorization", "Bearer " + apiKey);
-                xhr.send();
+        const POLL_MS = 5000;
+        const endpoint = 'https://api.paperspace.com/v1/machines/' + CONFIG.machine;
+        const statusEl = document.getElementById('statusText');
+
+        function callApi(method, path) {
+            return fetch(endpoint + path, {
+                method: method,
+                headers: { Authorization: 'Bearer ' + CONFIG.token }
+            });
+        }
+
+        // Ask Paperspace for the machine's current state and show it
+        async function refreshStatus() {
+            let res;
+            try {
+                res = await callApi('GET', '');
+            } catch (err) {
+                statusEl.textContent = 'unreachable';
+                return;
             }
 
-            // Get the status of the machine
-            function getStatusPaperspace()
-            {
-                var url = apiBase + machineId;
-                var xhr = new XMLHttpRequest();
-                xhr.open("GET", url, true);
-                xhr.setRequestHeader("Authorization", "Bearer " + apiKey);
-                xhr.responseType = 'json';
-                xhr.send();
+            const body = await res.json().catch(() => null);
+            statusEl.textContent = res.ok && body
+                ? body.state
+                : 'error (' + res.status + ')';
+        }
 
-                xhr.onload = function()
-                {
-                    if (xhr.status !== 200 || !xhr.response)
-                    {
-                        document.getElementById("statusText").innerHTML = 'error (' + xhr.status + ')';
-                        return;
-                    }
+        // Each button sends its lifecycle action (start, stop, restart)
+        document.querySelectorAll('button[data-action]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                callApi('PATCH', '/' + btn.dataset.action).catch(() => {});
+            });
+        });
 
-                    var state = xhr.response.state;
-                    document.getElementById("statusText").innerHTML = state;
-                };
-
-                xhr.onerror = function()
-                {
-                    document.getElementById("statusText").innerHTML = 'unreachable';
-                };
-            }
-        </script>
-    </head>
+        refreshStatus();
+        setInterval(refreshStatus, POLL_MS);
+    </script>
+</body>
 </html>
