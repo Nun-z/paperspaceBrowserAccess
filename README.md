@@ -1,13 +1,17 @@
 # paperspaceBrowserAccess
 
-Start, shutdown, or restart a [Paperspace](http://www.paperspace.com/) cloud computer using a regular web browser by accessing a simple website, without entering your credentials.  You can also get the current state of the machine (on, off, inaccessible, etc.).
+A single web page for controlling a [Paperspace](https://www.paperspace.com/) machine. It has buttons to start, shut down, and restart the machine, and it shows the machine's current state (off, starting, ready, etc.), refreshing every few seconds. Nobody using the page needs a Paperspace login.
 
-You can obfuscate the HTML here: https://www.wmtips.com/tools/html-obfuscator/
+## Use cases
+- Control your own VM from any device with a browser, without signing in to the Paperspace console.
+- Give a client a link so they can power their VM on and off without being given your account details.
 
-## Reason
-You can use this to quickly send commands to your Paperspace VM, or you can give it to a client so that they will be able to access their VM without knowing your credentials.
+## Setup
+1. In the Paperspace console, create a team API key. The page talks to the Paperspace v1 API (`api.paperspace.com/v1`), which replaced the Core API when it was retired in July 2024.
+2. Open `index.html` and paste your machine ID and API key into the `CONFIG` block near the top of the script.
+3. Host `index.html` on any web server or static hosting service.
 
-## Instructions
-1. Get a team API key in the Paperspace console. This uses the Paperspace v1 API (`api.paperspace.com/v1`); the old Core API was deprecated in July 2024.
-2. Add the machine id and the api-key to the source code of the file.
-3. Upload `index.html` to your server or webspace.
+If you want to make the page source harder to read, you can run it through an HTML obfuscator such as https://www.wmtips.com/tools/html-obfuscator/.
+
+## License
+[MIT](LICENSE)
